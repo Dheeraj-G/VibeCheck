@@ -1,6 +1,6 @@
 # Vibe Check 🎧
 
-**Vibe Check** is a mobile app designed to help you discover songs that match the *vibe* of whatever you're feeling right now.
+**Vibe Check** is a web app designed to help you discover songs that match the *vibe* of whatever you're feeling right now.
 
 ## 🎯 Goal
 Find songs based on the current vibe of a track you love — no more endless searching. Just pick a song, and let Vibe Check do the rest.
