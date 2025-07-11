@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@motionone/dom": "^10.18.0",
+    "@motionone/utils": "^10.18.0",
+    "framer-motion": "^12.23.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-tsparticles": "^2.12.2",
+    "tsparticles": "^3.8.1",
+    "unframer": "^3.0.2"
+  }
+}
