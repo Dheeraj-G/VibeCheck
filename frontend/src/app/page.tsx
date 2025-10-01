@@ -1,21 +1,18 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Song } from '../types';
 
-export default function Page() {
+function PageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const [spotifySearch, setSpotifySearch] = useState('');
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
-  const [spotifySuggestions, setSpotifySuggestions] = useState<Song[]>([]);
-  const [showSpotifyDropdown, setShowSpotifyDropdown] = useState(false);
   const [suggestedSongs, setSuggestedSongs] = useState<Song[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -63,38 +60,8 @@ export default function Page() {
     }
   };
 
-  const fetchRecommendations = async (song: Song) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const userToken = localStorage.getItem('spotify_access_token');
-      const res = await fetch("/api/recommendations/recommendations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          songId: song.id,
-          userToken: userToken  // Send user's Spotify token
-        }),
-      });
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`API error: ${res.status} - ${errorText}`);
-      }
-      const data = await res.json();
-      console.log("Song-based recommendations:", data.songs || data.recommendations || []);
-      setSuggestedSongs(data.songs || data.recommendations || []);
-    } catch (err) {
-      console.error("Error fetching recommendations:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch recommendations");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSpotifySearch = async (value: string) => {
+  const handleSpotifySearch = (value: string) => {
     setSpotifySearch(value);
-    // No dropdown; treat input as prompt. Trigger on Enter instead.
-    setShowSpotifyDropdown(false);
   };
 
   const handlePromptSubmit = () => {
@@ -241,5 +208,21 @@ export default function Page() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold mb-2">Loading VibeCheck...</h2>
+          <p className="text-white/70">Please wait while we load the app.</p>
+        </div>
+      </div>
+    }>
+      <PageContent />
+    </Suspense>
   );
 }
