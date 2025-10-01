@@ -1,15 +1,14 @@
+import { NextResponse } from 'next/server';
+
 const client_id = process.env.SPOTIFY_CLIENT_ID;
 const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
 
-export default function handler(req, res) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const refresh_token = req.query.refresh_token;
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const refresh_token = searchParams.get('refresh_token');
 
   if (!refresh_token) {
-    return res.status(400).json({ error: 'refresh_token required' });
+    return NextResponse.json({ error: 'refresh_token required' }, { status: 400 });
   }
 
   const tokenUrl = 'https://accounts.spotify.com/api/token';
@@ -18,27 +17,28 @@ export default function handler(req, res) {
     refresh_token: refresh_token
   });
 
-  fetch(tokenUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Authorization': 'Basic ' + Buffer.from(client_id + ':' + client_secret).toString('base64')
-    },
-    body: tokenData
-  })
-  .then(response => response.json())
-  .then(body => {
+  try {
+    const response = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': 'Basic ' + Buffer.from(client_id + ':' + client_secret).toString('base64')
+      },
+      body: tokenData
+    });
+
+    const body = await response.json();
+    
     if (body.access_token) {
-      res.json({
+      return NextResponse.json({
         access_token: body.access_token,
         refresh_token: body.refresh_token || refresh_token
       });
     } else {
-      res.status(400).json({ error: 'Failed to refresh token' });
+      return NextResponse.json({ error: 'Failed to refresh token' }, { status: 400 });
     }
-  })
-  .catch(error => {
+  } catch (error) {
     console.error('Refresh token error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

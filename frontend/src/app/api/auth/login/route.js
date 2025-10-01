@@ -1,5 +1,6 @@
 import { randomBytes } from 'crypto';
 import { stringify } from 'querystring';
+import { NextResponse } from 'next/server';
 
 const client_id = process.env.SPOTIFY_CLIENT_ID;
 const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
@@ -13,20 +14,13 @@ const generateRandomString = (length) => {
     .slice(0, length);
 };
 
-export default function handler(req, res) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+export async function GET(request) {
   console.log('Client ID:', client_id ? 'Set' : 'NOT SET');
   console.log('Client Secret:', client_secret ? 'Set' : 'NOT SET');
   console.log('Redirect URI:', redirect_uri);
 
   const state = generateRandomString(16);
   
-  // Set state cookie
-  res.setHeader('Set-Cookie', `spotify_auth_state=${state}; HttpOnly; Secure; SameSite=Lax; Max-Age=600; Path=/`);
-
   console.log('Login - Generated state:', state);
 
   // Spotify OAuth scope
@@ -41,5 +35,17 @@ export default function handler(req, res) {
       state: state
     });
 
-  res.redirect(authUrl);
+  // Create response with redirect and set cookie
+  const response = NextResponse.redirect(authUrl);
+  
+  // Set state cookie
+  response.cookies.set('spotify_auth_state', state, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    maxAge: 600,
+    path: '/'
+  });
+
+  return response;
 }

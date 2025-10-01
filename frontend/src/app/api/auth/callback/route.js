@@ -1,5 +1,5 @@
-import { randomBytes } from 'crypto';
 import { stringify } from 'querystring';
+import { NextResponse } from 'next/server';
 
 const client_id = process.env.SPOTIFY_CLIENT_ID;
 const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
@@ -7,28 +7,24 @@ const redirect_uri = process.env.VERCEL_URL
   ? 'https://vibe-check-steel.vercel.app/api/auth/callback'
   : 'http://localhost:3000/api/auth/callback';
 
-export default function handler(req, res) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const code = req.query.code || null;
-  const state = req.query.state || null;
-  const storedState = req.cookies?.spotify_auth_state;
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const code = searchParams.get('code');
+  const state = searchParams.get('state');
+  
+  // Get cookies from request
+  const cookieStore = request.cookies;
+  const storedState = cookieStore.get('spotify_auth_state')?.value;
 
   console.log('Callback received - State from URL:', state);
   console.log('Callback received - Stored state from cookie:', storedState);
 
   if (state === null || state !== storedState) {
     console.log('State mismatch detected!');
-    return res.redirect('/?' +
-      stringify({
-        error: 'state_mismatch'
-      }));
+    return NextResponse.redirect(new URL('/?' + stringify({
+      error: 'state_mismatch'
+    }), request.url));
   }
-
-  // Clear the state cookie
-  res.setHeader('Set-Cookie', 'spotify_auth_state=; HttpOnly; Secure; SameSite=Lax; Max-Age=0; Path=/');
 
   // Use fetch instead of request library for serverless
   const tokenUrl = 'https://accounts.spotify.com/api/token';
@@ -38,41 +34,49 @@ export default function handler(req, res) {
     grant_type: 'authorization_code'
   });
 
-  fetch(tokenUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Authorization': 'Basic ' + Buffer.from(client_id + ':' + client_secret).toString('base64')
-    },
-    body: tokenData
-  })
-  .then(response => response.json())
-  .then(body => {
+  try {
+    const response = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': 'Basic ' + Buffer.from(client_id + ':' + client_secret).toString('base64')
+      },
+      body: tokenData
+    });
+
+    const body = await response.json();
     console.log('Token request response:', body);
     
     if (body.access_token) {
       const access_token = body.access_token;
       const refresh_token = body.refresh_token;
 
-      // Redirect to the frontend with the access token
-      res.redirect('/?' +
-        stringify({
-          access_token: access_token,
-          refresh_token: refresh_token
-        }));
+      // Create response with redirect and clear cookie
+      const redirectResponse = NextResponse.redirect(new URL('/?' + stringify({
+        access_token: access_token,
+        refresh_token: refresh_token
+      }), request.url));
+      
+      // Clear the state cookie
+      redirectResponse.cookies.set('spotify_auth_state', '', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        maxAge: 0,
+        path: '/'
+      });
+      
+      return redirectResponse;
     } else {
       console.log('Token request failed:', body);
-      res.redirect('/?' +
-        stringify({
-          error: 'invalid_token'
-        }));
+      return NextResponse.redirect(new URL('/?' + stringify({
+        error: 'invalid_token'
+      }), request.url));
     }
-  })
-  .catch(error => {
+  } catch (error) {
     console.error('Token request error:', error);
-    res.redirect('/?' +
-      stringify({
-        error: 'token_request_failed'
-      }));
-  });
+    return NextResponse.redirect(new URL('/?' + stringify({
+      error: 'token_request_failed'
+    }), request.url));
+  }
 }
