@@ -2,14 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-
-interface Song {
-  id: string;
-  name: string;
-  artist: string;
-  album: string;
-  imageUrl: string;
-}
+import { Song } from '../types';
 
 export default function Page() {
   const searchParams = useSearchParams();
@@ -23,13 +16,20 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   useEffect(() => {
-    const token = searchParams.get('access_token');
-    const refresh = searchParams.get('refresh_token');
+    const token = searchParams?.get('access_token');
+    const refresh = searchParams?.get('refresh_token');
     if (token && refresh) {
       localStorage.setItem('spotify_access_token', token);
       localStorage.setItem('spotify_refresh_token', refresh);
+      setIsAuthenticated(true);
       router.replace('/');
+    } else {
+      // Check if we have stored tokens
+      const storedToken = localStorage.getItem('spotify_access_token');
+      setIsAuthenticated(!!storedToken);
     }
   }, [searchParams, router]);
 
@@ -39,7 +39,7 @@ export default function Page() {
     setError(null);
     try {
       const userToken = localStorage.getItem('spotify_access_token');
-      const res = await fetch("http://localhost:5001/prompt_recommendations", {
+      const res = await fetch("/api/recommendations/prompt_recommendations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -68,7 +68,7 @@ export default function Page() {
     setError(null);
     try {
       const userToken = localStorage.getItem('spotify_access_token');
-      const res = await fetch("http://localhost:5001/recommendations", {
+      const res = await fetch("/api/recommendations/recommendations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -102,31 +102,63 @@ export default function Page() {
     fetchPromptRecommendations(spotifySearch.trim());
   };
 
-  const handleSongSelect = (song: Song) => {
-    setSelectedSong(song);
-    setSpotifySearch(`${song.name} - ${song.artist}`);
-    setShowSpotifyDropdown(false);
-    console.log('Selected song:', JSON.stringify(song, null, 2));
-    fetchRecommendations(song);
+  const handleLogin = () => {
+    window.location.href = '/api/auth/login';
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('spotify_access_token');
+    localStorage.removeItem('spotify_refresh_token');
+    setIsAuthenticated(false);
+    setSelectedSong(null);
+    setSuggestedSongs([]);
+    setSpotifySearch('');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-black text-white">
+      {/* Header with Authentication */}
+      <div className="p-4 flex justify-between items-center">
+        <h1 className="text-2xl font-bold">VibeCheck</h1>
+        <div className="flex items-center space-x-4">
+          {isAuthenticated ? (
+            <>
+              <span className="text-sm text-white/70">Connected to Spotify</span>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded-md text-sm font-medium"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleLogin}
+              className="px-4 py-2 bg-green-600 hover:bg-green-500 rounded-md text-sm font-medium"
+            >
+              Login with Spotify
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Top Section - Search */}
       <div className="p-8 flex flex-col items-center space-y-6">
         <div className="w-full max-w-2xl relative mb-6">
           <input
             type="text"
-            placeholder="Describe a vibe or mood (e.g., upbeat summer road trip)"
+            placeholder={isAuthenticated ? "Describe a vibe or mood (e.g., upbeat summer road trip)" : "Please login with Spotify first"}
             value={spotifySearch}
             onChange={(e) => handleSpotifySearch(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handlePromptSubmit(); }}
-            className="w-full px-4 py-3 bg-white/10 rounded-lg text-white placeholder-white/60 focus:outline-none"
+            disabled={!isAuthenticated}
+            className={`w-full px-4 py-3 bg-white/10 rounded-lg text-white placeholder-white/60 focus:outline-none ${!isAuthenticated ? 'opacity-50 cursor-not-allowed' : ''}`}
           />
           <div className="mt-3 flex justify-end">
             <button
               onClick={handlePromptSubmit}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-md text-sm font-medium"
+              disabled={!isAuthenticated}
+              className={`px-4 py-2 rounded-md text-sm font-medium ${isAuthenticated ? 'bg-purple-600 hover:bg-purple-500' : 'bg-gray-600 cursor-not-allowed'}`}
             >
               Get Artists
             </button>
