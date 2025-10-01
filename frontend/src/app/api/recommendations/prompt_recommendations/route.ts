@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { SongRecommendationsEngine } from '@/lib/song_engine';
+import { SongRecommendationsEngine } from '../../../../lib/song_engine';
 
 // Initialize engine globally
 const engine = new SongRecommendationsEngine();
@@ -25,11 +25,12 @@ export async function POST(req: Request) {
       selected: result.selected,
     });
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Error in prompt recommendations API:', err);
+    const errorMessage = err instanceof Error ? err.message : 'Internal server error';
     return NextResponse.json({ 
       success: false, 
-      error: err.message || 'Internal server error' 
+      error: errorMessage
     }, { status: 500 });
   }
 }

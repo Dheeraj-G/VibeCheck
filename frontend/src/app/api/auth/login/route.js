@@ -14,7 +14,7 @@ const generateRandomString = (length) => {
     .slice(0, length);
 };
 
-export async function GET(request) {
+export async function GET() {
   console.log('Client ID:', client_id ? 'Set' : 'NOT SET');
   console.log('Client Secret:', client_secret ? 'Set' : 'NOT SET');
   console.log('Redirect URI:', redirect_uri);
