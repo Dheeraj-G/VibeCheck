@@ -4,7 +4,7 @@ const querystring = require('querystring');
 const client_id = process.env.SPOTIFY_CLIENT_ID;
 const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
 const redirect_uri = process.env.VERCEL_URL 
-  ? `https://${process.env.VERCEL_URL}/api/auth/callback`
+  ? 'https://vibe-check-steel.vercel.app/api/auth/callback'
   : 'http://localhost:3000/api/auth/callback';
 
 const generateRandomString = (length) => {
