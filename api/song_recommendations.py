@@ -25,7 +25,11 @@ class SongRecommendationsEngine:
         self.test_spotify_connection()
     
         try:
-            with open("genres.json", "r") as f:
+            # Try to load genres.json from the same directory as this file
+            import os
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            genres_path = os.path.join(current_dir, "genres.json")
+            with open(genres_path, "r") as f:
                 genres = json.load(f)
             self.allowed_genres = set(map(str.lower, genres))  # normalize to lowercase
             logger.info(f"Loaded {len(self.allowed_genres)} Spotify genres.")

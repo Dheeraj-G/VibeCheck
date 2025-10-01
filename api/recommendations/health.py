@@ -2,18 +2,26 @@ from http.server import BaseHTTPRequestHandler
 import json
 import os
 import sys
-from song_recommendations import SongRecommendationsEngine
-import logging
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Add the parent directory to the path to import song_recommendations
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Initialize engine globally
 try:
-    engine = SongRecommendationsEngine()
-except Exception as e:
-    logger.error(f"Failed to initialize recommendations engine: {e}")
+    from song_recommendations import SongRecommendationsEngine
+    import logging
+    
+    # Configure logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    
+    # Initialize engine globally
+    try:
+        engine = SongRecommendationsEngine()
+    except Exception as e:
+        logger.error(f"Failed to initialize recommendations engine: {e}")
+        engine = None
+except ImportError as e:
+    print(f"Import error: {e}")
     engine = None
 
 class handler(BaseHTTPRequestHandler):
@@ -26,6 +34,7 @@ class handler(BaseHTTPRequestHandler):
         response = {
             "status": "healthy",
             "engine_available": engine is not None,
-            "spotify_connected": engine.spotify_client is not None if engine else False
+            "spotify_connected": engine.spotify_client is not None if engine else False,
+            "import_error": str(e) if 'e' in locals() else None
         }
         self.wfile.write(json.dumps(response).encode())
