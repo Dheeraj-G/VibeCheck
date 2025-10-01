@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { SongRecommendationsEngine } from '../../../../lib/song_engine';
+import { SongRecommendationsEngine } from '@/lib/song_engine';
 
 // Initialize engine globally
 const engine = new SongRecommendationsEngine();
