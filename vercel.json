@@ -2,10 +2,10 @@
   "version": 2,
   "functions": {
     "api/**/*.py": {
-      "runtime": "python3.9"
+      "runtime": "@vercel/python"
     },
     "api/**/*.js": {
-      "runtime": "nodejs18.x"
+      "runtime": "@vercel/node"
     }
   }
 }
