@@ -2,8 +2,11 @@ from http.server import BaseHTTPRequestHandler
 import json
 import os
 import sys
-from song_recommendations import SongRecommendationsEngine
 import logging
+
+# Add the parent directory to the path to find song_recommendations
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from song_recommendations import SongRecommendationsEngine
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
