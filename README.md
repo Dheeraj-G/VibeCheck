@@ -3,7 +3,7 @@
 A modern music recommendation app built with Next.js, Python, and Spotify API, deployed as a monorepo on Vercel.
 
 ## Visit
-[VibeCheck](vibe-check-steel.vercel.app)
+[VibeCheck](https://vibe-check-steel.vercel.app)
 
 ## Features
 
