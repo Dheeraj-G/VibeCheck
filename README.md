@@ -1,4 +1,4 @@
-# VibeCheck - Music Recommendation App
+# VibeCheck - Music Recommendation App 
 
 A modern music recommendation app built with Next.js, Python, and Spotify API, deployed as a monorepo on Vercel.
 
