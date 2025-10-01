@@ -1,5 +1,5 @@
-const crypto = require('crypto');
-const querystring = require('querystring');
+import { randomBytes } from 'crypto';
+import { stringify } from 'querystring';
 
 const client_id = process.env.SPOTIFY_CLIENT_ID;
 const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
@@ -22,27 +22,13 @@ export default function handler(req, res) {
   if (state === null || state !== storedState) {
     console.log('State mismatch detected!');
     return res.redirect('/?' +
-      querystring.stringify({
+      stringify({
         error: 'state_mismatch'
       }));
   }
 
   // Clear the state cookie
   res.setHeader('Set-Cookie', 'spotify_auth_state=; HttpOnly; Secure; SameSite=Lax; Max-Age=0; Path=/');
-
-  const authOptions = {
-    url: 'https://accounts.spotify.com/api/token',
-    form: {
-      code: code,
-      redirect_uri: redirect_uri,
-      grant_type: 'authorization_code'
-    },
-    headers: {
-      'content-type': 'application/x-www-form-urlencoded',
-      Authorization: 'Basic ' + Buffer.from(client_id + ':' + client_secret).toString('base64')
-    },
-    json: true
-  };
 
   // Use fetch instead of request library for serverless
   const tokenUrl = 'https://accounts.spotify.com/api/token';
@@ -70,14 +56,14 @@ export default function handler(req, res) {
 
       // Redirect to the frontend with the access token
       res.redirect('/?' +
-        querystring.stringify({
+        stringify({
           access_token: access_token,
           refresh_token: refresh_token
         }));
     } else {
       console.log('Token request failed:', body);
       res.redirect('/?' +
-        querystring.stringify({
+        stringify({
           error: 'invalid_token'
         }));
     }
@@ -85,7 +71,7 @@ export default function handler(req, res) {
   .catch(error => {
     console.error('Token request error:', error);
     res.redirect('/?' +
-      querystring.stringify({
+      stringify({
         error: 'token_request_failed'
       }));
   });

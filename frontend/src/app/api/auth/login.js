@@ -1,5 +1,5 @@
-const crypto = require('crypto');
-const querystring = require('querystring');
+import { randomBytes } from 'crypto';
+import { stringify } from 'querystring';
 
 const client_id = process.env.SPOTIFY_CLIENT_ID;
 const client_secret = process.env.SPOTIFY_CLIENT_SECRET;
@@ -8,8 +8,7 @@ const redirect_uri = process.env.VERCEL_URL
   : 'http://localhost:3000/api/auth/callback';
 
 const generateRandomString = (length) => {
-  return crypto
-    .randomBytes(60)
+  return randomBytes(60)
     .toString('hex')
     .slice(0, length);
 };
@@ -34,7 +33,7 @@ export default function handler(req, res) {
   const scope = 'user-read-private user-read-email user-library-read playlist-read-private app-remote-control';
   
   const authUrl = 'https://accounts.spotify.com/authorize?' +
-    querystring.stringify({
+    stringify({
       response_type: 'code',
       client_id: client_id,
       scope: scope,
